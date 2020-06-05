@@ -8,12 +8,15 @@ import com.onarandombox.multiverseinventories.PlayerStats;
 import com.onarandombox.multiverseinventories.profile.PlayerProfile;
 import com.onarandombox.multiverseinventories.util.MinecraftTools;
 import org.bukkit.GameRule;
+import org.bukkit.Keyed;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.Statistic;
 import org.bukkit.advancement.Advancement;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.Recipe;
 import org.bukkit.potion.PotionEffect;
 
 import java.util.ArrayList;
@@ -661,6 +664,55 @@ public final class Sharables implements Shares {
             }).defaultSerializer(new ProfileEntry(false, "game_statistics")).altName("game_stats").build();
 
     /**
+     * Sharing Recipes.
+     */
+    public static final Sharable<Map> RECIPES = new Sharable.Builder<Map>("recipes", Map.class,
+            new SharableHandler<Map>() {
+                @Override
+                public void updateProfile(PlayerProfile profile, Player player) {
+                    Set<NamespacedKey> recipes = new HashSet<>();
+                    Iterator<Recipe> recipeIterator = inventories.getServer().recipeIterator();
+
+                    while (recipeIterator.hasNext()) {
+                        Recipe recipe = recipeIterator.next();
+                        if (recipe instanceof Keyed) {
+                            NamespacedKey key = ((Keyed) recipe).getKey();
+                            if (player.undiscoverRecipe(key)) recipes.add(key);
+                        }
+                    }
+
+                    player.discoverRecipes(recipes);
+
+                    Map<String, List<String>> recipesMap = new HashMap<>();
+                    for (NamespacedKey recipe: recipes) {
+                        recipesMap.putIfAbsent(recipe.getNamespace(), new ArrayList<>());
+                        recipesMap.get(recipe.getNamespace()).add(recipe.getKey());
+                    }
+
+                    profile.set(RECIPES, recipesMap);
+                }
+
+                @Override
+                public boolean updatePlayer(Player player, PlayerProfile profile) {
+                    Map<String, List<String>> recipes = profile.get(RECIPES);
+                    if (recipes == null) recipes = new HashMap<>();
+                    Iterator<Recipe> recipeIterator = inventories.getServer().recipeIterator();
+
+                    while (recipeIterator.hasNext()) {
+                        Recipe recipe = recipeIterator.next();
+                        if (recipe instanceof Keyed) {
+                            NamespacedKey key = ((Keyed) recipe).getKey();
+                            if (recipes.containsKey(key.getNamespace()) && recipes.get(key.getNamespace()).contains(key.getKey())) {
+                                player.discoverRecipe(key);
+                            } else player.undiscoverRecipe(key);
+                        }
+                    }
+
+                    return !recipes.isEmpty();
+                }
+            }).defaultSerializer(new ProfileEntry(false, "recipes")).build();
+
+    /**
      * Grouping for inventory sharables.
      */
     public static final SharableGroup ALL_INVENTORY = new SharableGroup("inventory",
@@ -704,7 +756,7 @@ public final class Sharables implements Shares {
     public static final SharableGroup ALL_DEFAULT = new SharableGroup("all", fromSharables(HEALTH, ECONOMY,
             FOOD_LEVEL, SATURATION, EXHAUSTION, EXPERIENCE, TOTAL_EXPERIENCE, LEVEL, INVENTORY, ARMOR, BED_SPAWN,
             MAXIMUM_AIR, REMAINING_AIR, FALL_DISTANCE, FIRE_TICKS, POTIONS, LAST_LOCATION, ENDER_CHEST, OFF_HAND,
-            ADVANCEMENTS, GAME_STATISTICS),
+            ADVANCEMENTS, GAME_STATISTICS, RECIPES),
             "*", "everything");
 
 
