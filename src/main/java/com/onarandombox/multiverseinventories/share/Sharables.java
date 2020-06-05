@@ -503,7 +503,8 @@ public final class Sharables implements Shares {
             new SharableHandler<Location>() {
                 @Override
                 public void updateProfile(PlayerProfile profile, Player player) {
-                    //profile.set(LAST_LOCATION, player.getLocation());
+                    // we can't save last_location here! it's too late!
+                    // instead, it's saved in the PlayerTeleportEvent listener.
                 }
 
                 @Override
