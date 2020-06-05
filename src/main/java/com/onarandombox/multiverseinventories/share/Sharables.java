@@ -7,6 +7,7 @@ import com.onarandombox.multiverseinventories.DataStrings;
 import com.onarandombox.multiverseinventories.PlayerStats;
 import com.onarandombox.multiverseinventories.profile.PlayerProfile;
 import com.onarandombox.multiverseinventories.util.MinecraftTools;
+import org.bukkit.GameRule;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.advancement.Advancement;
@@ -590,6 +591,8 @@ public final class Sharables implements Shares {
                     Set<String> completedAdvancements = (advancements != null) ? new HashSet<>(advancements) : new HashSet<>();
                     Iterator<Advancement> advancementIterator = inventories.getServer().advancementIterator();
 
+                    boolean announceAdvancements = player.getWorld().getGameRuleValue(GameRule.ANNOUNCE_ADVANCEMENTS);
+                    if (announceAdvancements) player.getWorld().setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
                     while (advancementIterator.hasNext()) {
                         Advancement advancement = advancementIterator.next();
                         // the set of Advancements to revoke
@@ -616,6 +619,7 @@ public final class Sharables implements Shares {
                         // here's the idea: revoke all (criteria \ completedAdvancements), grant (criteria intersect completedAdvancements)
                         // also, we don't need to grant/revoke anything in processedAdvancements since they've already been granted/revoked!
                     }
+                    if (announceAdvancements) player.getWorld().setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, true);
                     return advancements != null;
                 }
             }).defaultSerializer(new ProfileEntry(false, "advancements")).altName("achievements").build();
