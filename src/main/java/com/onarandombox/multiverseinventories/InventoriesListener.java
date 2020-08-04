@@ -215,10 +215,16 @@ public class InventoriesListener implements Listener {
      *
      * @param event The player teleport event.
      */
+    
+    /* JavaSE changed line 227
+    * This line creates a bug that prevents locations from being saved on interworld travel. Only an issue with certain plugins 
+    */
+    
+    
     @EventHandler(priority = EventPriority.MONITOR)
     public void playerTeleport(PlayerTeleportEvent event) {
         if (event.isCancelled()
-                || event.getFrom().getWorld().equals(event.getTo().getWorld())
+//                || event.getFrom().getWorld().equals(event.getTo().getWorld())
                 || !this.inventories.getMVIConfig().getOptionalShares().contains(Sharables.LAST_LOCATION)) {
             return;
         }
